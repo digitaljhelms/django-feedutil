@@ -42,20 +42,39 @@ def pull_feed(feed_url, posts_to_show=None, cache_expires=None):
     if data is None:
         # load feed
         try:
+            posts = []
             feed = feedparser.parse(feed_url)
             entries = feed['entries']
             #if posts_to_show > 0 and len(entries) > posts_to_show:
             #    entries = entries[:posts_to_show]
-            posts = [ {
-                'title': entry.title,
-                'author': entry.author if entry.has_key('author') else '',
-                'summary': summarize(entry.summary if entry.has_key('summary') else entry.content[0]['value']),
-                'summary_html': summarize_html(entry.description if entry.has_key('description') else entry.content[0]['value']),
-                'content': entry.description if entry.has_key('description') else entry.content[0]['value'],
-                'url': entry.link,
-                'comments': entry.comments if entry.has_key('comments') else '',
-                'published': datetime.datetime.fromtimestamp(time.mktime(entry.updated_parsed)) if entry.has_key('updated_parsed') else '', }
-                        for entry in entries ]
+            for entry in entries:
+                title = author = summary = description = url = comments = published = ''
+                title = entry.title
+                if entry.has_key('author'): author = entry.author
+                else: author = ''
+                if entry.has_key('summary'): summary = entry.summary
+                else: summary = entry.content[0]['value']
+                if entry.has_key('description'): description = entry.description
+                else: description = entry.content[0]['value']
+                url = entry.link
+                if entry.has_key('comments'): comments = entry.comments
+                else: comments = ''
+                if entry.has_key('updated_parsed'):
+                    published = datetime.datetime.fromtimestamp(time.mktime(entry.updated_parsed))
+                else: 
+                    published = ''
+
+                d = {
+                    'title': title,
+                    'author': author,
+                    'summary': summarize(summary),
+                    'summary_html': summarize_html(description),
+                    'content': description,
+                    'url': url,
+                    'comments': comments,
+                    'published': published,
+                    }
+                posts.append(d)
         except:
             if settings.DEBUG:
                 raise
